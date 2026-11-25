@@ -112,6 +112,16 @@ fn serve<S: Stream>(stream: &mut S) -> Result<()> {
         Message::Hello { version: PROTOCOL_VERSION, .. } => {}
         _ => bail!("invalid protocol handshake"),
     }
+    // Optional token auth
+    if let Ok(expected) = std::env::var("DDA_TOKEN") {
+        match receive(stream)? {
+            Message::AuthToken { token } if token == expected => {}
+            _ => {
+                send(stream, &Message::AccessDenied)?;
+                bail!("auth token rejected");
+            }
+        }
+    }
     if !matches!(receive(stream)?, Message::RequestAccess) {
         bail!("access request expected");
     }
@@ -195,6 +205,9 @@ fn connect(target: &str) -> Result<()> {
             public_key: "".into(),
         },
     )?;
+    if let Ok(token) = std::env::var("DDA_TOKEN") {
+        send(&mut tls_stream, &Message::AuthToken { token })?;
+    }
     send(&mut tls_stream, &Message::RequestAccess)?;
 
     match receive(&mut tls_stream)? {

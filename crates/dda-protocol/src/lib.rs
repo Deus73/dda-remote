@@ -18,6 +18,7 @@ pub enum Message {
     KeyExchange { ephemeral_key: String },
     AuthChallenge { challenge: String },
     AuthResponse { signature: String },
+    AuthToken { token: String },
     // Existing messages
     Ping,
     Pong,
