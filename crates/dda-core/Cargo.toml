@@ -1,0 +1,9 @@
+[package]
+name = "dda-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+dda-protocol = { path = "../dda-protocol" }
+anyhow = "1"

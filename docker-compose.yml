@@ -1,0 +1,14 @@
+version: '3.8'
+services:
+  dda_server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dda_remote_server
+    ports:
+      - "8500:8500"
+    volumes:
+      # Mount config en certs zodat ze binnen de container bereikbaar zijn
+      - ./config:/app/config
+      - ./certs:/app/certs
+    restart: unless-stopped
