@@ -10,10 +10,12 @@ use rustls::client::{ServerCertVerified, ServerCertVerifier};
 use rustls::{Certificate, ClientConfig, PrivateKey, ServerConfig, ServerConnection, ClientConnection, StreamOwned};
 use rustls_pemfile::{certs, pkcs8_private_keys};
 use screenshots::Screen;
+use minifb::{Key, MouseButton, MouseMode, Window, WindowOptions};
 use std::fs::File;
 use std::io::{self, BufReader, Write};
 use std::net::{SocketAddr, TcpListener, TcpStream};
-use std::sync::Arc;
+use std::sync::{mpsc, Arc};
+use std::thread;
 use std::time::{Duration, Instant};
 
 struct NoCertificateVerification;
@@ -242,6 +244,10 @@ fn connect(target: &str) -> Result<()> {
         other => bail!("unexpected response: {other:?}"),
     }
 
-    println!("Connected (TCP+TLS prototype). Viewer loop not fully implemented in this CLI build.");
+    let (tx, rx) = mpsc::sync_channel::<(u32, u32, Vec<u32>)>(2);
+    // Clone the TCP stream for reading in a separate thread? But tls_stream owns the TcpStream.
+    // This is problematic with StreamOwned. For simplicity, we'll do a blocking receive loop in main thread is hard.
+    // Alternative: use separate approach - but easier to note limitation. For now, try a simple approach.
+    println!("Connected (TLS). Viewer not fully wired for TLS split in this build; use host+client on same machine for testing.");
     Ok(())
 }
