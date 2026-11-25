@@ -6,7 +6,7 @@ pub const MAX_FRAME_BYTES: usize = 12 * 1024 * 1024;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", content = "data")]
 pub enum Message {
-    Hello { version: u16, client: String, public_key: String }, // Added public_key
+    Hello { version: u16, client: String, public_key: String, device_id: String }, // Added public_key, device_id
     RequestAccess,
     AccessGranted,
     AccessDenied,
@@ -39,7 +39,7 @@ mod tests {
     use super::*;
     #[test]
     fn roundtrip() {
-        let data = encode(&Message::Hello { version: 2, client: "test".into(), public_key: "pk_test".into() }).unwrap();
+        let data = encode(&Message::Hello { version: 2, client: "test".into(), public_key: "pk_test".into(), device_id: "dev1".into() }).unwrap();
         assert!(matches!(decode(&data).unwrap(), Message::Hello { version: 2, .. }));
     }
 }

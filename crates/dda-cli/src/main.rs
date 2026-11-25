@@ -109,7 +109,16 @@ fn host(port: u16) -> Result<()> {
 
 fn serve<S: Stream>(stream: &mut S) -> Result<()> {
     match receive(stream)? {
-        Message::Hello { version: PROTOCOL_VERSION, .. } => {}
+        Message::Hello { version: PROTOCOL_VERSION, device_id, .. } => {
+            println!("Client device_id: {}", device_id);
+            if let Ok(trusted) = std::fs::read_to_string("trusted_devices.txt") {
+                let allowed: Vec<&str> = trusted.lines().map(|l| l.trim()).filter(|l| !l.is_empty()).collect();
+                if !allowed.contains(&device_id.as_str()) {
+                    send(stream, &Message::AccessDenied)?;
+                    bail!("device_id not trusted");
+                }
+            }
+        }
         _ => bail!("invalid protocol handshake"),
     }
     // Optional token auth
@@ -197,12 +206,14 @@ fn connect(target: &str) -> Result<()> {
     let conn = ClientConnection::new(config, server_name)?;
     let mut tls_stream = StreamOwned::new(conn, tcp);
 
+    let device_id = std::fs::read_to_string("device_id.txt").unwrap_or_else(|_| "client-unknown".to_string());
     send(
         &mut tls_stream,
         &Message::Hello {
             version: PROTOCOL_VERSION,
             client: "dda-remote".into(),
             public_key: "".into(),
+            device_id,
         },
     )?;
     if let Ok(token) = std::env::var("DDA_TOKEN") {
