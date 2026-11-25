@@ -63,12 +63,12 @@ The remote host must type `YES` in its terminal. For Debian -> Windows, run Open
 - `docs/ROADMAP.md`: milestone and security gates
 - `scripts/`: platform build helpers
 
-## Known limitations
+## Known limitations (current TCP prototype)
 
-- No application-layer encryption, authentication, 2FA, device IDs, or relay
-- No keyboard forwarding, audio, file transfer, clipboard, multi-monitor selection, or persistent service
-- JPEG/JSON is inefficient; ~5 fps target, not low-latency Parsec-class streaming
-- Mouse coordinates assume the primary display begins at (0,0); multi-monitor layouts may differ
-- Consent is entered through host terminal, not a native approval dialog
-- Wayland screen capture and input are not yet implemented reliably
-- No CI-validated builds in this delivery: dependencies and code must be compiled/tested on target platforms
+- No application-layer encryption, authentication, 2FA, device IDs, or relay (use SSH tunneling on untrusted networks).
+- No keyboard forwarding, audio, file transfer, clipboard, multi-monitor selection, or persistent/background service.
+- JPEG over a simple framed protocol is inefficient; target is low FPS for prototyping, not low-latency streaming.
+- Mouse coordinates assume the primary display at (0,0); multi-monitor layouts may behave unexpectedly.
+- Host consent is done via terminal prompt (`YES`), not a native GUI dialog.
+- Screen capture/input behavior is platform-dependent; Wayland support is not guaranteed.
+- Binaries in `dist/` are provided as convenience builds; validate on your target system before use.
