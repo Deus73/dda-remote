@@ -109,13 +109,23 @@ fn host(port: u16) -> Result<()> {
 
 fn serve<S: Stream>(stream: &mut S) -> Result<()> {
     match receive(stream)? {
-        Message::Hello { version: PROTOCOL_VERSION, device_id, .. } => {
-            println!("Client device_id: {}", device_id);
+        Message::Hello { version: PROTOCOL_VERSION, device_id, public_key, .. } => {
+            println!("Client device_id: {} pubkey: {}", device_id, if public_key.len() > 16 { &public_key[..16] } else { &public_key });
             if let Ok(trusted) = std::fs::read_to_string("trusted_devices.txt") {
                 let allowed: Vec<&str> = trusted.lines().map(|l| l.trim()).filter(|l| !l.is_empty()).collect();
                 if !allowed.contains(&device_id.as_str()) {
                     send(stream, &Message::AccessDenied)?;
                     bail!("device_id not trusted");
+                }
+            }
+            if let Ok(trusted_keys) = std::fs::read_to_string("trusted_keys.txt") {
+                let ok = trusted_keys.lines().any(|l| {
+                    let parts: Vec<&str> = l.trim().splitn(2, '|').collect();
+                    parts.len() == 2 && parts[0] == device_id && parts[1] == public_key
+                });
+                if !ok {
+                    send(stream, &Message::AccessDenied)?;
+                    bail!("client key not trusted");
                 }
             }
         }
@@ -207,12 +217,17 @@ fn connect(target: &str) -> Result<()> {
     let mut tls_stream = StreamOwned::new(conn, tcp);
 
     let device_id = std::fs::read_to_string("device_id.txt").unwrap_or_else(|_| "client-unknown".to_string());
+    let public_key = std::fs::read_to_string("client_key.txt").unwrap_or_else(|_| {
+        let k = format!("{:x}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_nanos());
+        let _ = std::fs::write("client_key.txt", &k);
+        k
+    });
     send(
         &mut tls_stream,
         &Message::Hello {
             version: PROTOCOL_VERSION,
             client: "dda-remote".into(),
-            public_key: "".into(),
+            public_key,
             device_id,
         },
     )?;
