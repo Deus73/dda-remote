@@ -7,3 +7,6 @@ license.workspace = true
 [dependencies]
 dda-protocol = { path = "../dda-protocol" }
 anyhow = "1"
+rustls = "0.21"
+rustls-pemfile = "1"
+

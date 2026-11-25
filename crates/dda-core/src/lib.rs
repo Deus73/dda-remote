@@ -2,10 +2,13 @@ use anyhow::Result;
 use dda_protocol::{decode, encode, Message, MAX_FRAME_BYTES};
 use std::io::{Read, Write};
 use std::net::TcpStream;
+use rustls::{ServerConnection, ClientConnection, StreamOwned};
 
 pub trait Stream: Read + Write + Send {}
 
 impl Stream for TcpStream {}
+impl Stream for StreamOwned<ServerConnection, TcpStream> {}
+impl Stream for StreamOwned<ClientConnection, TcpStream> {}
 
 pub fn send<S: Stream>(stream: &mut S, msg: &Message) -> Result<()> {
     let data = encode(msg)?;
@@ -28,3 +31,4 @@ pub fn receive<S: Stream>(stream: &mut S) -> Result<Message> {
     let msg = decode(&buf)?;
     Ok(msg)
 }
+
